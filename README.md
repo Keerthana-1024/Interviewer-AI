@@ -1,172 +1,64 @@
-# AI Interviewer — Resume-Aware Adaptive Interview Platform
+# MeetingIQ — AI-Powered Meeting Intelligence & Analytics
 
-A full-stack AI-powered interview practice platform built as a serious portfolio project. Upload your resume, paste a job description, and conduct a realistic video-style interview with an AI interviewer that evaluates your answers in real-time.
+**Turn conversations into structured insights, actionable decisions, and measurable outcomes.**
 
----
+MeetingIQ is an AI-powered meeting assistant designed to transform meeting conversations into structured, searchable information. It aims to help teams move beyond transcripts by extracting key discussion points, decisions, action items, and unresolved questions, while enabling users to query meeting content and analyze collaboration patterns.
 
-## ✨ Features
+The project combines backend engineering, language-model workflows, structured data processing, and analytics to explore how unstructured conversational data can be converted into useful business intelligence.
 
-| Feature | Implementation |
-|---------|---------------|
-| Resume parsing (PDF/DOCX) | PyMuPDF + python-docx → LLM structured extraction |
-| JD analysis | Qwen2.5 7B (Ollama) → Pydantic structured output |
-| Hybrid skill matching | RapidFuzz fuzzy + SentenceTransformers semantic |
-| Adaptive interview | LangGraph state machine with rule-based adaptive selection |
-| AI voice | Deepgram Aura TTS (MP3 streamed) |
-| Your camera + mic | Browser WebRTC + Web Speech API STT |
-| Whiteboard | Miro embed (opens as overlay for system design) |
-| Answer evaluation | LLM rubric (0–4 scale, 5 criteria) |
-| Final report | Competency radar + bar charts, gap analysis |
-| Persistence | Supabase (PostgreSQL + JSONB) |
+## Problem Statement
 
----
+Meetings generate large amounts of unstructured information, but important decisions, responsibilities, and follow-up tasks can easily get lost in lengthy transcripts.
 
-## 🏗 Architecture
+Traditional meeting notes often require manual effort and provide limited visibility into recurring discussion patterns or task completion.
 
-```
-Frontend (React + Vite + Tailwind)
-         │  HTTP /api/*
-Backend (FastAPI + Python)
-    ├── Document Processor (PyMuPDF / python-docx)
-    ├── Resume Analyst → Ollama (qwen2.5:7b-instruct)
-    ├── JD Analyst → Ollama
-    ├── Hybrid Match Engine
-    │     ├── RapidFuzz skill matching
-    │     └── SentenceTransformers (bge-small-en-v1.5)
-    ├── Interview Planner → Ollama
-    ├── LangGraph state machine
-    │     ├── select_question (rule-based adaptive)
-    │     ├── evaluate_answer → Ollama
-    │     └── decide_next (rule-based)
-    ├── Deepgram TTS (AI voice)
-    └── Supabase (PostgreSQL)
-```
+MeetingIQ addresses this problem by building a workflow that transforms conversational data into structured outputs that are easier to search, review, and analyze.
 
----
+## Key Capabilities
 
-## 🚀 Setup (WSL)
+### 1. Meeting Capture and Transcription
+- Capture meeting conversations within a controlled meeting environment.
+- Convert audio into text using a speech-to-text integration.
+- Preserve speaker information where supported by the transcription pipeline.
+- Organize transcripts for downstream processing and retrieval.
 
-### Prerequisites
-- WSL (Ubuntu) with Python 3.11
-- Ollama running on Windows with `qwen2.5:7b-instruct-q4_0`
-- A [Supabase](https://supabase.com) project (free tier works)
-- A [Deepgram](https://console.deepgram.com) API key (free tier: 12,000 min/year)
-- Node.js 20+ in WSL
+### 2. AI-Generated Meeting Summaries
+- Generate concise summaries of meeting discussions.
+- Extract key topics, decisions, and important takeaways.
+- Identify unresolved questions and follow-up requirements where supported by the underlying conversation.
+- Structure generated outputs for easier review rather than returning only free-form text.
 
-### 1. Clone and setup
-```bash
-# In WSL terminal, navigate to the project
-cd /mnt/c/Keertha/javaProjects/interview-ai
+### 3. Action Item Extraction
+- Identify tasks and commitments expressed during discussions.
+- Extract associated owners and deadlines when they are explicitly available.
+- Organize follow-up items into a structured format.
+- Support clearer tracking of responsibilities after meetings.
 
-# Run the one-shot setup script
-bash setup_wsl.sh
-```
+### 4. Context-Aware Meeting Q&A
+- Allow users to ask questions about meeting discussions.
+- Retrieve relevant transcript context to ground answers in the available meeting data.
+- Provide supporting excerpts or references where implemented.
+- Reduce reliance on unsupported assumptions by distinguishing available evidence from missing information.
 
-### 2. Configure environment
-```bash
-cd backend
-cp .env.example .env
-nano .env   # Fill in DATABASE_URL, DEEPGRAM_API_KEY
-```
+### 5. Meeting Analytics
+The structured outputs create opportunities to analyze meeting effectiveness beyond individual summaries.
 
-Required `.env` values:
-```env
-DATABASE_URL=postgresql://postgres.xxxx:password@aws-0-us-east-1.pooler.supabase.com:6543/postgres
-DEEPGRAM_API_KEY=your-key-here
+Potential analytical dimensions include:
+- Meeting duration and frequency.
+- Distribution of discussion topics.
+- Number of decisions and action items generated.
+- Action-item completion rates, when task status data is available.
+- Recurring unresolved topics across meetings.
 
-# Already set — uses your local Ollama
-LLM_PROVIDER=ollama
-LLM_MODEL=qwen2.5:7b-instruct-q4_0
-OLLAMA_BASE_URL=http://localhost:11434
-```
+These metrics can help explore patterns in team collaboration and follow-up effectiveness. Analytics should be presented only when the required underlying data is available.
 
-### 3. Run database migrations
-```bash
-cd backend
-source .venv/bin/activate
-alembic upgrade head
-```
+## Technology Stack
 
-### 4. Start backend
-```bash
-cd backend
-source .venv/bin/activate
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 5. Start frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### 6. Open the app
-- **Frontend**: http://localhost:5173
-- **API docs**: http://localhost:8000/docs
-
----
-
-## 📡 API Endpoints
-
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/api/resumes` | Upload + parse resume |
-| POST | `/api/job-descriptions/analyze` | Analyze JD |
-| POST | `/api/matches` | Run hybrid matching |
-| GET  | `/api/matches/{id}` | Get match report |
-| POST | `/api/interviews` | Create session + plan |
-| GET  | `/api/interviews/{id}` | Get session state |
-| GET  | `/api/interviews/{id}/question` | Get current question |
-| GET  | `/api/interviews/{id}/question/audio` | Deepgram TTS audio |
-| POST | `/api/interviews/{id}/answers` | Submit answer |
-| POST | `/api/interviews/{id}/pause` | Pause session |
-| POST | `/api/interviews/{id}/resume` | Resume session |
-| POST | `/api/interviews/{id}/end` | End early |
-| GET  | `/api/interviews/{id}/report` | Final report |
-| DELETE | `/api/interviews/{id}` | Delete session |
-| GET  | `/api/interviews` | List sessions |
-
----
-
-## 🧪 Run Tests
-```bash
-cd backend
-source .venv/bin/activate
-pytest tests/unit/ -v
-```
-
----
-
-## 🎯 Matching Algorithm
-
-Weights (configurable in `.env`):
-- **45%** Required skill coverage (RapidFuzz fuzzy matching)
-- **25%** Evidence strength (LLM confidence scores)
-- **20%** Semantic relevance (cosine similarity, bge-small-en-v1.5)
-- **10%** Experience alignment (years of experience heuristic)
-
-Scores are **NOT** validated hiring predictions — they reflect textual overlap only.
-
----
-
-## ⚠️ Known Limitations
-
-1. **Ollama latency**: Qwen 7B is slower than cloud APIs (~5–15s per question). Consider `qwen2.5-coder:7b` for coding-heavy interviews.
-2. **Scanned PDFs**: OCR not included. Text-based PDFs only.
-3. **STT browser support**: Web Speech API works in Chrome/Edge. Firefox needs a polyfill.
-4. **Miro whiteboard**: Requires a Miro account. Opens as iframe overlay.
-5. **Single-user**: No authentication. Suitable for local practice only.
-6. **LangGraph resume**: Graph state is serialized to Supabase JSONB — large states may approach column limits.
-
----
-
-## 🔮 Future Improvements
-
-- [ ] Voice-first mode (Deepgram STT instead of Web Speech API)
-- [ ] Resume OCR for scanned documents (Tesseract)
-- [ ] User authentication (Supabase Auth)
-- [ ] Export report as PDF
-- [ ] Interview recording playback
-- [ ] Custom question bank
-- [ ] Multi-language support
+| Component | Technology |
+|---|---|
+| Backend API | Python, FastAPI | 
+| AI orchestration | LangGraph | 
+| Language models | Local LLM Model through Ollama - qwen2.5:7b-instruct-q4_0 | 
+| Speech Model | Deepgram STT and TTS | 
+| Database | Supabase | 
+| Frontend | React.js |
