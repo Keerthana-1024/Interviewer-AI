@@ -1,4 +1,4 @@
-# MeetingIQ — AI-Powered Meeting Intelligence & Analytics
+# PrepPilot — AI-Powered Meeting Intelligence & Analytics
 
 **Turn conversations into structured insights, actionable decisions, and measurable outcomes.**
 
